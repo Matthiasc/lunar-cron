@@ -1,0 +1,34 @@
+{
+  "name": "lunar-cron",
+  "version": "1.0.0",
+  "description": "basic cron like functionality for moon cycles.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Matthiasc/lunar-cron.git"
+  },
+  "keywords": [
+    "lunar",
+    "moon",
+    "cron",
+    "schedule"
+  ],
+  "author": "Matthias Crommelinck",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Matthiasc/lunar-cron/issues"
+  },
+  "homepage": "https://github.com/Matthiasc/lunar-cron#readme",
+  "dependencies": {
+    "long-timeout": "^0.1.1",
+    "lunarphase-js": "^2.0.1",
+    "lune": "^0.4.0"
+  },
+  "devDependencies": {
+    "dayjs": "^1.11.10",
+    "vitest": "^0.34.6"
+  }
+}
