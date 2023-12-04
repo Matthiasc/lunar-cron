@@ -8,6 +8,16 @@ test("basic", () => {
   expect(lc.removeJob).toBeDefined();
   expect(lc.start).toBeDefined();
   expect(lc.stop).toBeDefined();
+
+  const job = lc.addJob("job1", () => {}, LUNAR_PHASES.NEW);
+  expect(job.callBack).toBeDefined();
+  expect(job.executed).toBeDefined();
+  expect(job.executionTime).toBeDefined();
+  expect(job.jobName).toBe("job1");
+  expect(job.lunarPhase).toBeDefined();
+  expect(job.offsetDays).toBe(0);
+  expect(job.offsetHours).toBe(0);
+  expect(job.repeat).toBe(-1);
 });
 
 test("createLunarCron", () => {

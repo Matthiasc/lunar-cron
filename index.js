@@ -102,11 +102,11 @@ export function createLunarCron() {
   }
 
   /**
-   * @param {string} jobName unique name of this job, if already present it will be replaced
-   * @param {function(Job)} callBack function to be called
+   * @param {string} jobName - unique name of this job, if already present it will be replaced
+   * @param {function(Job)} callBack - function to be called
    * @param {keyof LUNAR_PHASES} lunarPhase - lunarPhase phase of the moon
-   * @param {number} offsetDays -1 = 1 day before the phase, 3 = 3 days after the phase
-   * @param {number} offsetHours -1 = 1 hour before the phase, 3 = 3 hours after the phase
+   * @param {number} offsetDays - 3 = 3 days after the phase, -1 = 1 day before the phase,
+   * @param {number} offsetHours -  3 = 3 hours after the phase, -1 = 1 hour before the phase,
    * @param {number} repeat - number of times the job will be scheduled and executed again, -1 for infinit times, 0 the job will be executed only once and not be repeated
    */
   function addJob(jobName, callBack, lunarPhase, offsetDays = 0, offsetHours = 0, repeat = -1) {
@@ -143,6 +143,8 @@ export function createLunarCron() {
 
     //schedule job is possible
     if (_started) scheduleFirstJob();
+
+    return { ..._jobs.find((j) => j.jobName === jobName) };
   }
 
   /**
