@@ -22,7 +22,7 @@ lc.removeJob("unique job name"); //remove a job and it's possible future executi
 
 lc.start(); //start the service
 
-lc.stop(); // stop the service
+lc.stop(); //stop the service
 
 lc.getScheduledJobs(); //list the jobs that are still scheduled/active
 ```
