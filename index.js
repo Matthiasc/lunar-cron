@@ -1,8 +1,10 @@
 import lt from "long-timeout";
-import { findNextPhaseDate } from "./lib/utils";
-import { LUNAR_PHASES } from "./lib/const";
+import { findNextPhaseDate } from "./lib/utils.js";
+import { LUNAR_PHASES } from "./lib/const.js";
 
 export { LUNAR_PHASES };
+
+const SYNODIC_MONTH_IN_MS = 29.53058868 * 24 * 60 * 60 * 1000;
 
 //TODO: add optional date generation object (handy for testing?)
 export function createLunarCron() {
@@ -13,8 +15,7 @@ export function createLunarCron() {
    * @property {string} jobName - The name of the job.
    * @property {keyof LUNAR_PHASES} lunarPhase - The moon phase associated with the job ("FULL" or "NEW").
    * @property {function(Job)} callBack - The callback function associated with the job.
-   * @property {number} offsetTime - The number of days to offset the job.
-   * @property {number} offsetHours - The number of hours to offset the job.
+   * @property {number} offsetTime - The time to offset the job schedule.
    * @property {number} repeat - How many times the job will be executed (default is -1 for infinite times);
    * @property {number} executed - How many times the job is executed;
    * @property {number} executionTime - The next execution time for the callback to be invoked
@@ -28,6 +29,11 @@ export function createLunarCron() {
    * @type {Job[]}
    */
   let _jobs = [];
+
+  /**
+   * @type {Job}
+   */
+  let _scheduledJob;
 
   function start() {
     _started = true;
@@ -51,10 +57,10 @@ export function createLunarCron() {
 
     //find next job
     sortJobList();
-    const firstJob = _jobs[0];
+    const firstJob = (_scheduledJob = _jobs[0]);
 
     const now = Date.now();
-    const then = firstJob.executionTime;
+    const then = _scheduledJob.executionTime;
 
     _setTimeoutId = lt.setTimeout(
       function () {
@@ -90,10 +96,20 @@ export function createLunarCron() {
     // get job pattern
 
     // calculate next job date
-    const nextPhaseDate = findNextPhaseDate(new Date(), job.lunarPhase);
+    let nextPhaseDate = findNextPhaseDate(new Date(), job.lunarPhase);
 
-    nextPhaseDate.setDate(nextPhaseDate.getDate() + job.offsetDays);
-    nextPhaseDate.setTime(nextPhaseDate.getTime() + job.offsetHours * 60 * 60 * 1000); //read it was better not to use setHours()
+    nextPhaseDate.setTime(nextPhaseDate.getTime() + job.offsetTime);
+
+    //add a month if appears in the past.
+    if (Date.now() > nextPhaseDate) {
+      nextPhaseDate = findNextPhaseDate(new Date(Date.now() + SYNODIC_MONTH_IN_MS), job.lunarPhase);
+      nextPhaseDate.setTime(nextPhaseDate.getTime() + job.offsetTime);
+      console.error("adding one ", nextPhaseDate);
+    }
+
+    if (Date.now() > nextPhaseDate) {
+      console.log("this should not happen", getScheduledJobs());
+    }
 
     // add the executionTime to the job
     job.executionTime = nextPhaseDate.getTime();
@@ -105,11 +121,10 @@ export function createLunarCron() {
    * @param {string} jobName - unique name of this job, if already present it will be replaced
    * @param {function(Job)} callBack - function to be called
    * @param {keyof LUNAR_PHASES} lunarPhase - lunarPhase phase of the moon
-   * @param {number} offsetDays - 3 = 3 days after the phase, -1 = 1 day before the phase,
-   * @param {number} offsetHours -  3 = 3 hours after the phase, -1 = 1 hour before the phase,
+   * @param {number} offsetTime - time in ms, 24 * 60 * 60 * 1000 = 1 day after the phase, -24 * 60 * 60 * 1000 = 1 day before the phase,
    * @param {number} repeat - number of times the job will be scheduled and executed again, -1 for infinit times, 0 the job will be executed only once and not be repeated
    */
-  function addJob(jobName, callBack, lunarPhase, offsetDays = 0, offsetHours = 0, repeat = -1) {
+  function addJob(jobName, callBack, lunarPhase, offsetTime = 0, repeat = -1) {
     //check data
     if (!(jobName && callBack && lunarPhase)) throw new Error("missing or incorrect arguments");
 
@@ -120,12 +135,8 @@ export function createLunarCron() {
 
     repeat = repeat < 0 ? -1 : repeat;
 
-    if (offsetDays + offsetHours / 24 < -31)
-      return console.warn(
-        "Job",
-        jobName,
-        "is not added as it most likely be triggered in the past due to high negative offset values"
-      );
+    if (offsetTime < -SYNODIC_MONTH_IN_MS)
+      throw new Error("Job '" + jobName + "' is not allowed to have a negative offset time larger then a lunar cycle");
 
     jobName = jobName.toLowerCase();
 
@@ -133,7 +144,7 @@ export function createLunarCron() {
     removeJob(jobName);
 
     //add the job to the jobList
-    _jobs.push({ jobName, callBack, lunarPhase, offsetDays, offsetHours, repeat: repeat, executed: 0 });
+    _jobs.push({ jobName, callBack, lunarPhase, offsetTime, repeat: repeat, executed: 0 });
 
     //determine the next executionTime for the job
     setJobExecutionTime(jobName);
@@ -152,7 +163,15 @@ export function createLunarCron() {
    * @param {string} jobName
    */
   function removeJob(jobName) {
+    //remove the job from the list
     _jobs = _jobs.filter((j) => j.jobName !== jobName);
+    //cancel if there is a current scheduled job
+    if (_scheduledJob?.jobName === jobName) {
+      lt.clearTimeout(_setTimeoutId);
+      _scheduledJob = null;
+      _setTimeoutId = null;
+      scheduleFirstJob();
+    }
   }
 
   /**
