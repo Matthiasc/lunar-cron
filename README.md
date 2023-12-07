@@ -13,8 +13,7 @@ lc.addJob(
   "unique job name", //unique job name
   () => console.log("job running!"), //callback / job to run
   LUNAR_PHASES.NEW, //lunar phase as trigger for the job
-  0, //offset in days (optional)
-  0, //offset in hours (optional)
+  0, //offset in ms (optional)
   -1 //times to repeat the job (-1 for infinite times) (optional)
 );
 

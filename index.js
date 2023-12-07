@@ -1,10 +1,8 @@
 import lt from "long-timeout";
-import { findNextPhaseDate } from "./lib/utils.js";
-import { LUNAR_PHASES } from "./lib/const.js";
+import { findNextScheduleDate } from "./lib/utils.js";
+import { LUNAR_PHASES, SYNODIC_MONTH_IN_MS } from "./lib/const.js";
 
 export { LUNAR_PHASES };
-
-const SYNODIC_MONTH_IN_MS = 29.53058868 * 24 * 60 * 60 * 1000;
 
 //TODO: add optional date generation object (handy for testing?)
 export function createLunarCron() {
@@ -93,26 +91,10 @@ export function createLunarCron() {
 
     if (!job) return;
 
-    // get job pattern
-
-    // calculate next job date
-    let nextPhaseDate = findNextPhaseDate(new Date(), job.lunarPhase);
-
-    nextPhaseDate.setTime(nextPhaseDate.getTime() + job.offsetTime);
-
-    //add a month if appears in the past.
-    if (Date.now() > nextPhaseDate) {
-      nextPhaseDate = findNextPhaseDate(new Date(Date.now() + SYNODIC_MONTH_IN_MS), job.lunarPhase);
-      nextPhaseDate.setTime(nextPhaseDate.getTime() + job.offsetTime);
-      console.error("adding one ", nextPhaseDate);
-    }
-
-    if (Date.now() > nextPhaseDate) {
-      console.log("this should not happen", getScheduledJobs());
-    }
+    const scheduledDate = findNextScheduleDate(job.lunarPhase, job.offsetTime);
 
     // add the executionTime to the job
-    job.executionTime = nextPhaseDate.getTime();
+    job.executionTime = scheduledDate.getTime();
 
     sortJobList();
   }
@@ -166,6 +148,10 @@ export function createLunarCron() {
     //remove the job from the list
     _jobs = _jobs.filter((j) => j.jobName !== jobName);
     //cancel if there is a current scheduled job
+    cancelScheduled();
+  }
+
+  function cancelScheduled(jobName) {
     if (_scheduledJob?.jobName === jobName) {
       lt.clearTimeout(_setTimeoutId);
       _scheduledJob = null;

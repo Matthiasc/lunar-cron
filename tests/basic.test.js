@@ -2,7 +2,10 @@ import { expect, test, vi, beforeAll, assert } from "vitest";
 import { createLunarCron, LUNAR_PHASES } from "../index";
 import { findNextPhaseDate } from "../lib/utils";
 
-beforeAll(() => vi.useFakeTimers());
+beforeAll(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2023, 0, 1));
+});
 
 test("basic", () => {
   const lc = createLunarCron();
@@ -26,8 +29,8 @@ test("offsetTime too negative throws error", () => {
   const lc = createLunarCron();
 
   assert.throws(() => {
-    lc.addJob("job1", () => {}, LUNAR_PHASES.NEW, -30 * 24 * 60 * 60 * 1000);
-  }, "Job 'job1' is not allowed to have a negative offset time larger then a lunar cycle");
+    lc.addJob("job", () => {}, LUNAR_PHASES.NEW, -30 * 24 * 60 * 60 * 1000);
+  }, "Job 'job' is not allowed to have a negative offset time larger then a lunar cycle");
 
   const jobs = lc.getScheduledJobs();
   expect(jobs.length).toBe(0);
@@ -36,11 +39,10 @@ test("offsetTime too negative throws error", () => {
 test("createLunarCron", () => {
   const lc = createLunarCron();
 
-  lc.addJob("job1", () => {}, LUNAR_PHASES.NEW);
-  lc.addJob("job1", () => {}, LUNAR_PHASES.FULL); //update
+  lc.addJob("job", () => {}, LUNAR_PHASES.NEW);
+  lc.addJob("job", () => {}, LUNAR_PHASES.FULL); //update
 
   const jobs = lc.getScheduledJobs();
-  // console.log(jobs.map((j) => ({ ...j, time: new Date(j.executionTime) })));
   expect(jobs.length).toBe(1);
 });
 
