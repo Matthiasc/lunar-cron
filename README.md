@@ -17,7 +17,7 @@ lc.addJob(
   -1 //times to repeat the job (-1 for infinite times) (optional)
 );
 
-lc.removeJob("unique job name"); //remove a job and it's possible future executions
+lc.removeJob("unique job name"); //remove a job and cancel it's possible future execution
 
 lc.start(); //start the service
 
