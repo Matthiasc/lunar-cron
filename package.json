@@ -25,7 +25,6 @@
   "homepage": "https://github.com/Matthiasc/lunar-cron#readme",
   "dependencies": {
     "long-timeout": "^0.1.1",
-    "lunarphase-js": "^2.0.1",
     "lune": "^0.4.0"
   },
   "devDependencies": {
