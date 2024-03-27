@@ -1,5 +1,7 @@
 # lunar-cron 🌕⏱️
 
+Schedule jobs based on the moon phase.
+
 - Basic moon phase based cron functionality.
 - Uses only one setTimeout in the background.
 - Does not store jobs/progress in case of service restart/stop/fail.
